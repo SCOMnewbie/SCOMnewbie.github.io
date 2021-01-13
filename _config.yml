@@ -7,7 +7,7 @@
 
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # --------------------------
-title: Chirpy                          # the main title
+title: SCOMnewbie learnings                         # the main title
 
 tagline: A text-focused Jekyll theme   # it will display as the sub-title
 
@@ -19,21 +19,21 @@ description: >-                        # used by seo meta and the atom feed
 # fill in the protocol & hostname for your site, e.g., 'https://username.github.io'
 url: ''
 
-author: your_full_name                  # change to your full name
+author: Francois LEON                 # change to your full name
 
 github:
-  username: github_username             # change to your github username
+  username: SCOMnewbie            # change to your github username
 
 twitter:
-  username: twitter_username            # change to your twitter username
+  username: fanfleon            # change to your twitter username
 
 social:
-  name: your_full_name                  # it will shows as the copyright owner in Footer
-  email: example@doamin.com             # change to your email address
+  name: Francois LEON                 # it will shows as the copyright owner in Footer
+  email: francois.leon@hotmail.com             # change to your email address
   links:
     # The first element serves as the copyright owner's link
-    - https://twitter.com/username      # change to your twitter homepage
-    - https://github.com/username       # change to your github homepage
+    - https://twitter.com/fanfleon      # change to your twitter homepage
+    - https://github.com/SCOMnewbie       # change to your github homepage
     # Uncomment below to add more social links
     # - https://www.facebook.com/username
     # - https://www.linkedin.com/in/username
@@ -44,10 +44,10 @@ google_site_verification: google_meta_tag_verification # change to your verifica
 
 # Only if your site type is GitHub Project sites and doesn't have a custom domain,
 # change below value to '/projectname'.
-baseurl: ''
+baseurl: 'https://scomnewbie.github.io/'
 
 # Change to your timezone › http://www.timezoneconverter.com/cgi-bin/findzone/findzone
-timezone: Asia/Shanghai
+timezone: Europe/Paris
 
 google_analytics:
   id: ''          # Fill with your Google Analytics ID
