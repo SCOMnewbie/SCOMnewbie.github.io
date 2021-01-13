@@ -1,7 +1,7 @@
 ---
-title: FIRSTATTEMPT
+title: First Attempt
 date: 2021-01-12 00:00
-categories: [TEST, FIRSTTEST]
+categories: [TEST]
 tags: [test]     # TAG names should always be lowercase
 ---
 
