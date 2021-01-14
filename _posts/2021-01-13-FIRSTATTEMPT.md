@@ -1,19 +1,23 @@
 ---
-title: First Attempt
+title: Fist Article
 date: 2021-01-12 00:00
 categories: [TEST]
 tags: [test]     # TAG names should always be lowercase
 ---
 
-# This is the first article of this website
+# Introduction
 
-I'm used to mkdocs, let's see what we can do here.
+I'm used to mkdocs, let's see what we can do here with Jekyll. I will use this page to store what I'm used to use when I write an article.
 
-## Hearders 2
+## Header layer
 
-Test images
+The TOC is really useful on the right side.
+
+Let's see how to import an image.
 
 ![Desktop View](/assets/img/2021-01-12/01.png)
+
+Let's now use a little bit of HTML to write in various color.
 
 <span style="color:red">**Let's write something in red**</span>
 
