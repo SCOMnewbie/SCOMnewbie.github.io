@@ -21,7 +21,7 @@ Test images
 
 # Let's add some code
 
-```Powershell
+```powershell
 
 Write-host "This is a Write-host"
 $var = Get-process
@@ -38,3 +38,7 @@ Write-output "Processes are: $($var)"
 {% include warning.html content="This is my warning." %}
 
 {% include important.html content="This is my important info." %}
+
+# Labels
+
+<span class="label label-default">Default</span>
