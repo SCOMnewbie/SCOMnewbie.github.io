@@ -1,5 +1,5 @@
 ---
-title: Fist Article
+title: First Article
 date: 2021-01-12 00:00
 categories: [TEST]
 tags: [test]     # TAG names should always be lowercase
@@ -7,7 +7,7 @@ tags: [test]     # TAG names should always be lowercase
 
 # Introduction
 
-I'm used to mkdocs, let's see what we can do here with Jekyll. I will use this page to store what I'm used to use when I write an article.
+I'm used to Mkdocs, let's see what we can do here with Jekyll. I will use this page to store what I'm used to use when I write an article.
 
 ## Header layer
 
