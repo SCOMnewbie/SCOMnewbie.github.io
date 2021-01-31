@@ -18,6 +18,7 @@ The goal of this article will be to explain:
 
 # Single tenant Vs multi tenant application
 
+## Definition
 
 Enterprise App: 
 - Manifestation of the local tenant
@@ -26,6 +27,9 @@ Enterprise App:
 - One or more per application (multi tenant)
 - In the previous article AzureCLI/AZ Powershell/Graph are in fact App registration that has been published as multi tenant App into one of the MS tenant
 - Are in charge of consent 
+- Who can acces the app
+- Is app available on myapps
+- 
 
 App registration:
 - Definition of the app
@@ -33,6 +37,10 @@ App registration:
   - Permission
   - Authorized Authentication flow 
   - Claim configuration
+  - Verified publisher (later)
+  - SEcret/Certs
+  - Expose API like user_impersonation
+  - Define role of your app (Definition of your app)
   - 1 tenant
 
 
@@ -48,7 +56,20 @@ Note: Talk about the /common endpoint in your app
 
 Note: Global admin take over > monitor RBAC on your sub, you can use this [logic App](https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) that I've built.
 
+## Side effect of multi tenant app
+
+Danger
+    - Principal of least privilege. Admin has to be trained, admin consent can be super critical.
+      - Global admin, application admin, cloud application admin (high privilege) > should be monitored!
+    - External
+      - ¨Phishing attacks
+        - Enable MFA on all users
+        - Audit Service principal over privilege apps. Read all files/ ...
+
+
 
 # references
 
 [Consent](https://docs.microsoft.com/en-us/azure/active-directory/develop/application-consent-experience)
+[Malicious OAuth application](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
+[CASB](https://docs.microsoft.com/fr-fr/cloud-app-security/app-permission-policy)
