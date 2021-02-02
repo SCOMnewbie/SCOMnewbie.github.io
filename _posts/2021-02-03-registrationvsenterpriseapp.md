@@ -25,7 +25,7 @@ I can't count the number of times devellopers/admins tell me that Microsoft has 
 
 ## App registration
 
-An app registration is literally the definition of the application you’re developing. This is what you register to your identity provider to get the globally unique Client ID (also called app ID) into your personal tenant but also between all tenants in general (more information later with multi-tenant application). 
+An app registration is literally the definition of the application you’re developing. This is what you register to your identity provider to get the globally unique Client ID (also called app ID) into your personal tenant but also between all tenants in general (more information later with multi-tenant application).
 Within the app registration, you will be able to:
 
 - Configure secrets/certificates. As scripters, we usually use this part to execute our non-interactive scripts as an application.
@@ -39,34 +39,31 @@ Within the app registration, you will be able to:
 
 As you can see, the app registration is not just a place you use to generate your secrets for your clientID. This part has a real impact on how your application will behave, how your application is secured and what your application can do. This is where your developer should spend most of this time.
 
+{% include warning.html content="An app registration is a one to many tenant relationship. Keep in mind that you don't have an AZ CLI/Powershell app registration in your tenant, only Microsoft has." %}
+
 ## Enterprise App
 
+An enterprise app, or service principal (SP), is a local tenant representation of an app registration. The SP reference an app registration which has been declared within the local tenant or in a remote one (multi-tenant app). For scripters, this is what you’re using when you do your az login with the potential secret/certificate that you have to rotate (You rotate it right? You don’t check the never expire 😊). Then Microsoft proposes a service called Managed service Identity (MSI) which basically is a service principal in the back end, but they are in charge of rotating the secret for you.
+
+-	Manage who can access your application in your tenant. You will have to be authenticated to use this application, so you can decide who can use it or not with user or group assignment.
+-	Monitore who access your application. Every sign-ins are tracked and can be filtered or exported from the portal.
+-	Monitore who gave their consents to your application on which specific scope.
+-	Configure conditional access.
+-	GO DEEP SAML/ OTHER TYPE Of Autehtn
+
+As you can see, the entperprise app oversees a lot of other topics in parallel of app registration and there is no overlap. Enterprise app is more about management around an application. Usually this part is more covered by IT admins instead of developers.
+
+{% include warning.html content="An entperprise app is a many to one relationship. We've seen that there is only one app registration for all tenants, but multiple SP can reference this app registration" %}
+
+## Single tenant Vs multi tenant application
+
+Let's start with a multi tenant picture:
+
+![registrationvsenterpriseapp 01](/assets/img/2021-02-03/singlemultitenant.png)
+
+And as you can imagine a single tenant application can be used ONLY by the local tenant.
 
 
-An app registration is the definition of your application you're
-
-Enterprise App: 
-- Manifestation of the local tenant
-- Service Principal (Identity)
-  - MSI are service principal behind the scene
-- One or more per application (multi tenant)
-- In the previous article AzureCLI/AZ Powershell/Graph are in fact App registration that has been published as multi tenant App into one of the MS tenant
-- Are in charge of consent 
-- Who can acces the app
-- Is app available on myapps
-- 
-
-App registration:
-- Definition of the app
-- How token is configured
-  **- Permission**
-**  - Authorized Authentication flow **
-  **- Claim configuration**
-  - Verified publisher (later)
-  - **SEcret/Certs**
-  - Expose API like user_impersonation
-  **- Define role of your app (Definition of your app)**
-  - **1 tenant**
 
 
 Multi tenant:
@@ -114,3 +111,4 @@ Sentinel
 [Malicious OAuth application](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
 [CASB](https://docs.microsoft.com/fr-fr/cloud-app-security/app-permission-policy)
 [Fake oauth apps](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
+[single Vs multi tenant](https://docs.microsoft.com/en-us/azure/active-directory/develop/single-and-multi-tenant-apps)
