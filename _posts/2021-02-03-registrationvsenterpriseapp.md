@@ -55,13 +55,25 @@ As you can see, the entperprise app oversees a lot of other topics in parallel o
 
 {% include warning.html content="An entperprise app is a many to one relationship. We've seen that there is only one app registration for all tenants, but multiple SP can reference this app registration" %}
 
-## Single tenant Vs multi tenant application
+# Single tenant Vs multi tenant application
 
 Let's start with a multi tenant picture:
 
 ![registrationvsenterpriseapp 01](/assets/img/2021-02-03/singlemultitenant.png)
 
-And as you can imagine a single tenant application can be used ONLY by the local tenant.
+To clarify this picture, as a customer, there no security concerns with the multi-tenant app if you read and agree the required application’ scope (see danger section below). In other words, it’s not because your SP reference an app registration located in another tenant that you or them will be able to access data located in your/their subscription.
+
+{% include note.html content="Rule of thumb: If you know in your company you only have one tenant and does not create application for external customers, always create a single tenant app. Doing this your employees and guest accounts (B2B) will be able to access it and you’re improving your security posture. In addition, it’s pretty simple to implement infrastructure tests on this parameter as monitoring." %}
+
+Last point, without going too deep. Open ID Connect (OIDC) is a layer on top of OAUTH2.0 which give you for OIDC an Id Token and for OAUTH an Access and a Refresh token.  Both are Authentication/Authorization protocols that we consume through different connection flows (more information later). Today we should use something called the V2.0 endpoint which give you all the latest features the identity platform can offer. In short what does it means:
+For single tenant app, you should hit (or hardcode if you prefer) the endpoint https://login.microsoftonline.com/'Tenant Id or tenant Name'/oauth2/v2.0/authorize and for a multi-tenant app https://login.microsoftonline.com/common/oauth2/v2.0/authorize. As you can imagine for a multi-tenant app, you specify common magic name, and let the platform find the right tenant for you.
+
+{% include warning.html content="Important: Imagine you want to provide an app to only few tenants, you will have to handle it from your app itself. Basically, in the ID token you will receive, if it’s not “allowed” drop the query." %}
+
+{% include note.html content="Microsoft does not recommend decoding the Access token (AT) in your application but the ClientID instead. An AT is design to grant access to an application and shouldn’t be touched. Microsoft explain that “tomorrow”, they can encrypt this token with more than a base64 encryption." %}
+
+
+# Consent
 
 
 
@@ -112,3 +124,4 @@ Sentinel
 [CASB](https://docs.microsoft.com/fr-fr/cloud-app-security/app-permission-policy)
 [Fake oauth apps](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
 [single Vs multi tenant](https://docs.microsoft.com/en-us/azure/active-directory/develop/single-and-multi-tenant-apps)
+[OIDC in AAD](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-protocols-oidc)
