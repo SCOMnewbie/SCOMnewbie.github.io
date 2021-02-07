@@ -1,5 +1,5 @@
 ---
-title: What an application is?
+title: What a modern application is?
 date: 2021-02-03 00:00
 categories: [identity]
 tags: [identity,Powershell,AzureAD, Graph]
@@ -16,7 +16,7 @@ The goal of this article will be to explain:
 - What consent is and why we have to consider it seriously
 - Security and monitoring auround Oauth permissions
 
-# App registration Vs Entperise application
+# App registration Vs Enterprise application
 
 ## Introduction
 
@@ -71,7 +71,6 @@ For single tenant app, you should hit (or hardcode if you prefer) the endpoint h
 
 {% include note.html content="Microsoft does not recommend decoding the Access token (AT) in your application but the ClientID instead. An AT is design to grant access to an application and shouldn’t be touched. Microsoft explain that “tomorrow”, they can encrypt this token with more than a base64 encryption." %}
 
-
 # Consent
 
 For me, consent is one of the most underestimated part of modern auth. I’ve seen global admins/App admins who click the grant admin consent button just without really understand what they’re doing. And on the other side, I’ve seen clients who click on the consent button without even taking 2 seconds to read what they consented to … But interesting things can happen if you don’t take consent seriously (see below).
@@ -88,39 +87,6 @@ But who can give admin consent?
 - Application administration which can do almost everything on app registration and enterprise app except to admin consent Microsoft graph audience.  But an app admin can consent an api exposed by another app which already received admin consent by a GA. This is this RBAC is considered as a high privilege role.
 
 {% include note.html content="In certain cases, you want to be alerted when a RBAC event is generated on your subscription (Even if it’s a GA who decided to look at your sub). You can use this [logic app]((https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) ) to be alerted." %}
-
-# Security and monitoring auround Oauth permissions
-
-Now we start to understand the big picture, the goal of this part will be to explain why we have to understand those concepts to avoid drama … As you can imagine, attackers are ready to show you what you can do with the secret you’ve added in your public application.
-
-## Danger and remediation
-
-- Global admins has to be TRAINED! They have to understand all those concepts and be ready to challenge devellopers. Imagine a GA consent a scope like Group.ReadWrite.All (delete all groups with application permission), things can become bad quickly...
-
-- Train your devellopers too. Even if AAD does a good job to require admin consent when needed, for an end user perspective, it's not really a good experience when you receive a wall of scopes to consent at the first login. Developpers should implement dynamic scopes in their application.
-
-- All Enterprise applications have to be monitored to detect overprivileged consented scopes. We will see below few ways to do it. But doing this, you will avoid end user to consent crazy scopes because the dev/admin did a bad job.
-
-- Train your users to read what they consent is not a possible option. But AAD propose few options to avoid making the consent experience too painfull. You can:
-  
-  - Under AAD/Entperprise App/User settings, you can deny the fact that users can consent themselve but you can also enable the feature to request admin consent.
-
-
-
-Danger
-    - Principal of least privilege. Admin has to be trained, admin consent can be super critical.
-      - Global admin, application admin, cloud application admin (high privilege) > should be monitored!
-    - External
-      - ¨Phishing attacks
-        - Enable MFA on all users
-        - Audit Service principal over privilege apps. Read all files/ ... Pretty simple but devastated concept.
-
-Remediation
-
-  Publisher verication
-  implement consent policies (low level permission allowed for the end user otherwise Admin consent)
-  Admin workflow help go quicker
-  User assignmet (who can explicitely access you app)
 
 # Demo
 
@@ -221,27 +187,43 @@ Invoke-RestMethod -Uri $uri -Headers $Headers
 
 And now, the attacker have access to your tenant and can in this case read the email address for the entiere company. And just to fully understand, now we access the company information with a service principal, so we don't care if a user has MFA, reset password or anything like that. We execute our flow through another context ... If we now check the logs, we should see:
 
-<Check service principal sign-ins>
+Nothing . . . In fact this is not true. We can see in the AAD audit log that my GA account had consented a new application, but when I read the mail from the attacker sice with the secret, I don't see any trace from both the AAD and Enterprise app side. I assume (hope) that MCAS can provide something ...
+
+To be honest, because I was super surprise that I didn't catch any logs, I've decided this time to grant group creation instead of just read.mail. And except this in the AAD audit logs because I did a POST:
+
+![hack oauth 06](/assets/img/2021-02-03/hack_oauth_06.png)
+
+{% include important.html content="I have to admit that I'm surprised. Even with the new experience, the service principal sign-ins is empty ... It seems that MS has some hard time to track client credential flow I guess. I hope this will change in a near future" %}
 
 As you can see, this attack is super simple and in fact rely on the fact that admins have a light governance regarding consent and basic user do not read what they consent to. But for the rest, there is not even a secret exchange!
 
-So Microsoft succeed to mitigate this type of attacks with publishers.
+So Microsoft succeed to "mitigate" this type of attacks because my multi tenant app was unverified, but now imagine an attacker get GA access on a tenant, we can imagine he use this one to jump on another one.
 
+# Tips
 
+Now we start to understand the big picture, what can we do?
 
+- Global admins has to be TRAINED! They have to understand all those concepts and be ready to challenge devellopers. Imagine a GA consent a scope like Group.ReadWrite.All (delete all groups with application permission), things can become bad quickly...
 
+- Train your devellopers. Even if AAD does a good job to require admin consent when needed, for an end user perspective, it's not really a good experience when you receive a wall of scopes to consent at the first login. Developpers should implement dynamic scopes in their application and should understand the principal of least privilege.
 
+- All Enterprise applications have to be monitored to detect overprivileged consented scopes. As we've seen, monitoring sign-ins is not an option today, but monitoring the enterprise app scopes or the audit log when someone consent can be an option. You also have tools like the cloud app security portal or sentinel which can help you to improve your security posture.
 
+- Train your users to read what they consent is not a possible option. But AAD propose few options to avoid making the consent experience too painfull. You can really tweak end user consent options to avoid blocking the consent complitely. Doing this, you can generate a lot of frustration. This is why MS propose some option like allow user to self consent if the publisher is trusted and if the scopes are allowed by the IT team. We can enable also theAdmin workflow help end user to request consent to a GA through a simple button.
 
-Monitoring Service Principal
+# Conclusion
 
-Cloud App security
-Sentinel
+I think now you can admit that an app registration and an enterprise app is not te same thing. Between this article and a previous one, modern authentication should start to be an easy pezy topic. We will continue few topics in a later one, but the big part is done.
 
+Here few take away from this article:
 
-  
+- TRAINED your GA! It's not normal a GA does not understand this scopes concepts.
+- If you don't plan to create multi-tenant app, stick to single and try to implement governance/monitoring.
+- Start implementing Enterprise app governance. It means implementing a governance (weekly review) and monitoring with tools like cloud app security, Sentinel, Scripts, ...
+- Don't forget the public Vs confidential application. Here we've succeed to pown the customer tenant without any secret. Don't store Api key in a public app.
+- Consent is underrated, but super important. Make sure you have a proper governance around consent in place.
 
-
+See you in the next article where we should start to create applications with code!
 
 # references
 
@@ -250,6 +232,7 @@ Sentinel
 [Malicious OAuth application](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
 
 [CASB](https://docs.microsoft.com/fr-fr/cloud-app-security/app-permission-policy)
+
 [Fake oauth apps](https://4sysops.com/archives/the-risk-of-fake-oauth-apps-in-microsoft-365-and-azure/)
 
 [single Vs multi tenant](https://docs.microsoft.com/en-us/azure/active-directory/develop/single-and-multi-tenant-apps)
@@ -258,5 +241,6 @@ Sentinel
 
 [Permission and consent](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent)
 
-
 [How to hack OAuth](https://youtu.be/tbu4CfzP25o)
+
+[App publisher](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-configure-publisher-domain)
