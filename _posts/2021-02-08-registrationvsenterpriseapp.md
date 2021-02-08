@@ -90,7 +90,7 @@ But who can give admin consent?
 - **Global admin** which we can be translated to **god access**. A GA can do anything, like giving admin consent on any scopes for all users or take control back on any tenant's subscription. This is the domain admins group attackers try to get in the “old” AD days.
 - **Application administrator** which can do almost everything on app registration and enterprise app **except to admin consent Microsoft graph audience**. But an app admin can consent an api exposed by another app which already received admin consent by a GA. This is this RBAC is **considered as a high privilege role**.
 
-{% include note.html content="In certain cases, you want to be alerted when a RBAC event is generated on your subscription (e.g: A GA who decided to look at your sub). You can use this [logic app]((https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) ) to be alerted." %}
+{% include note.html content="In certain cases, you want to be alerted when a RBAC event is generated on your subscription (e.g: A GA who decided to look at your sub). You can use this [logic app](https://github.com/SCOMnewbie/Azure/tree/master/LogicApp/RBAC-Warnings) to be alerted." %}
 
 # Demo
 
