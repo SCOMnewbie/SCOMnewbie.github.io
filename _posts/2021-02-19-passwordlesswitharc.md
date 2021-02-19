@@ -40,7 +40,7 @@ $KVToken = New-ARCAccessTokenMSI -Audience Keyvault
 
 ```
 
-Now you should have received an access token for the **Keyvault audience**. You can use [JWT.ms](JWT.ms) to verify/check few interesting things:
+Now you should have received an access token for the **Keyvault audience**. You can use [JWT.ms](https://JWT.ms) to verify/check few interesting things:
 
 - The **aud** property should be: https://vault.azure.net. It's normal, as explain in previous article, the audience is an important part of the modern auth world. Here it's not an access token that we will be able to use to access graph or ARM, but Keyvault endpoint only.
 - The **appId** property, which is as the name suggest, the Id of our service principal. You should copy it somewhere for a later usage in this demo.
@@ -166,7 +166,7 @@ Victory again!
 # Resource manager
 
 With the previous demos, we've had to play with REST directly which is not necessarily convenient. Do you think we can **play with our well-known Az module** too?
-For this demo, I've decided to grant my **MSI reader access at the subscription level**. Another thing we will need is to get the AppId of our Service Principal. You can decide to open the Enterprise Application tile or for fun, in [Graph Explorer](aka.ms/ge), you can use this query: https://graph.microsoft.com/v1.0/servicePrincipals?$filter=DisplayName eq 'your computer name'&$select=Appid and grab it from there.
+For this demo, I've decided to grant my **MSI reader access at the subscription level**. Another thing we will need is to get the AppId of our Service Principal. You can decide to open the Enterprise Application tile or for fun, in [Graph Explorer](https://aka.ms/ge), you can use this query: https://graph.microsoft.com/v1.0/servicePrincipals?$filter=DisplayName eq 'your computer name'&$select=Appid and grab it from there.
 
 ```powershell
 # Define variables
