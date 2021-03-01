@@ -61,24 +61,24 @@ At this point, we should be able to generate access token for the Keyvault audie
 
 ![01](/assets/img/2021-02-28/01.png)
 
-You can clone the repo and replace the values with yours in the settings.json file. Then before pushing this code to your private repo, make sure also that the WindowsSelfDeployment.yml is located under the .github/workflows folder. If not, simply copy/paste from the one located in the backup folder. You can now commit and push to Github which should start the pipeline.
+You can clone the repo and **replace the values with yours in the settings**.json file. Then before pushing this code to your private repo, make sure also that the WindowsSelfDeployment.yml is located under the .github/workflows folder. If not, simply copy/paste from the one located in the backup folder. You can now commit and push to Github which should start the pipeline.
 
 {% include important.html content="I do this demo on Github because I’ve wanted to learn it. You can do the same on other providers without effort. The only mandatory part is your self-hosted agents require access to Azure and more specifically Keyvault. In other words, you will need an Azure subscription if you want to deploy something in GCP for example." %}
 
-Let's configure to the Linux agent and then continue the demo.
+Let's configure the Linux agent and then continue the demo.
 
 # linux Self-hosted agent
 
-Compared to my Windows agent which run locally on a hyper-V, I've decided to deploy my Linux agent in Azure (I don't have an easy GCP/AWS playground). Here what I've done on the machine:
+Compared to my Windows agent which run locally on Hyper-V, I've decided to deploy my Linux agent in Azure (I don't have an easy GCP/AWS playground). Here what I've done on the machine:
 
-- Install fresh 18.04 Ubuntu server
-- Install the github self-hosted agent. You can't run the ./config.sh in Root. Make sure you have the proper rights applied to your action-runner folder ;).
+- Install a fresh 18.04 Ubuntu server
+- Install the Github self-hosted agent. You can't run the ./config.sh in Root. Make sure you have the proper rights applied to your action-runner folder (not root) ;).
 - Install Powershell
 - Install Azure CLI
 - Install the ARC agent
 - Create the same as Windows profile.ps1 file within the $PSHOME folder.
 
-That's it! Then I've ran ./run.sh & to avoid blocking my terminal and now the github agent should become green in the settings/action tab. The final part it now we have to permit our new service principal to access our Keyvault. As before with the Windows agent, go in the Azure CLI secret and grant Key Vault Secrets User permission on it.
+Then I've ran **./run.sh &** to avoid blocking my terminal and now the Github agent should become green in the settings/action tab. As before, **allow the new service principal to access your secret in Keyvault** and you’re done.
 
 # Explain the pipeline
 
@@ -86,58 +86,53 @@ The repo looks like this:
 
 ![01](/assets/img/2021-02-28/02.png)
 
-As explained before, I wanted to learn Github action. I've never played with it, it was the occasion. This repo is just for a demo pupose, but I wanted to as much as possible different actions with the smallest code. In other words, it's not production ready :D.
+As explained before, I wanted to learn Github action. I've never played with it. This repo is just for a demo purpose, it's **not production ready**.
 
-In this repo, there is 2 peployment files wich are almost identical. The differences are:
+In this repo, there is 2 deployment files which are almost identical. The differences are:
 
-- Backslash and forwardslash for filepath depending on the self-hosted runner OS
-- Labels linux/windows to target the good one when you have the two enabled
-- Sudo word in front of the Powershell execution. Today Powershell does not support sudo parameter in a cmdlet. You have to be local admin/"root" to contact the local MSI endpoint and being able to generate an access token.  
+- **Backslash and forward slash** for file path depending on the self-hosted runner Operating System
+- **Labels linux/windows** to target the good agent when you have the two enabled
+- **sudo** word in front of the Powershell execution. Today Powershell does not support sudo parameter in a cmdlet. You have to be local admin/"root" to contact the local MSI endpoint and being able to generate an access token.  
 
-So if you plan to play with Linux or Windows, just copy/paste the right file from the Backup folder.
+{% include note.html content="If you plan to play with Linux or Windows, just copy/paste the right file from the Backup folder to the workflow folder." %}
 
-The worflow is:
+**==== The worflow is ====**:
 
-Runs on the GH agent:
-1- Gitleaks to validate you didn't commited secrets
-2- Super-linter to validate your code quality on various languages
+**Runs on the GH agent in parallel**:
 
-BUILD PART
+- **Gitleaks** to validate you didn't commited secrets
+- **Super-linter** to validate your code quality on various languages
 
-Runs on the Self hosted agent:
-3- Execute the Deploy-Infra.ps1, load variables from settings file depending the self-hosted runner OS.
-4- Use the New-ARCAccessTokenMSI function to generate an access token (AT) for KV audience.
-5- Use the Get-KeyvaultSecretValue function to get the Azure CLI secret from KV with the previously generated AT.
-6- Log with Azure CLI as a service principal. From there you can imagine deploy your Terraform, Pulumi or whatever. In my case, I've just use the CLI to create a storage account.
-7- I generate a new AT this time for the ARM audience. Why not?
-8- Connect to Azure using the Az Powershell module to Get the previously create storage account.
+THEN **build our infrastructure from a the Self hosted agent**:
 
-INFRA TEST PART
+- Execute the **Deploy-Infra.ps1**, load variables from settings.json file depending the self-hosted runner OS.
+- Use the **New-ARCAccessTokenMSI** function to generate an access token (AT) for KV audience.
+- Use the **Get-KeyvaultSecretValue** function to get the Azure CLI secret from KV with the previously generated AT.
+- **Log** with **Azure CLI** as a service principal. From there you can imagine deploy your Terraform, Pulumi or whatever. In my case, I've just use the CLI to create a storage account.
+- I generate a new AT this time for the ARM audience. Why not?
+- **Connect to Azure using the Az Powershell** module to Get the previously create storage account.
 
-Runs on the Self hosted agent:
+FINALLY **test our infrastructure from a the Self hosted agent**:
 
-- Execute the Run-PesterTests.ps1 which configure the behavior of our Pester tests
+- Execute the **Run-PesterTests.ps1** which configure the behavior of our Pester tests
 - Then excute few tests on our infrastructure (our storage account)
-- Then upload the artifact in Github for later usage
+- Then **upload the artifact in Github** for later usage
 
 # Conclusion
 
-As I've tried to explained in the previous article, I think I've shown how we can deploy code without the first password. The one you need you access your vault. This is not a passwordless solution in the strict sense of the words, but according to me it's a big security improvement. Let's see how Microsoft will improve the user experience with both CLI and Powershell to simply be able to use the -MSI.
+I think I've shown how we can interact with Azure or any other platforms without the first chicken/egg password. This is not a password less solution in the strict sense of the word, but according to me it's a **nice security/user improvement**. **You don’t know if tomorrow someone will find a way to expose Github credentials**. Same thing for users, you will have to think to **rotate credentials on regular basis**. This solution tries to tackle those “burdens”. Let's see how **Microsoft will improve the user experience** with both CLI and Powershell to simply be able to use the **-MSI with ARC**.
 
 **Here few take away** from this article:
 
 - With ARC, you're not confronted to the chicken/egg problem. You can access your Keyvault from anywhere without any password.
-- Your devs does not even know what the passwords are, only your runners can access th Keyvault. And yes I know they can dump in a file blabla, but it's another story in this case.
-- If no one has access to passwords, it means you can roll all your secrets more easily.
+- Your devs does not even know what the passwords, only your runners should access the Keyvault.
+- If no one has access to passwords, it means you can roll all your secrets easily.
 - If you don't use the guest policy, this service is free.
 
-See you in the next ones!
-
+See you in the next one!
 
 # References
 
 [Fun with ARC](https://scomnewbie.github.io/posts/passwordlesswitharc/)
 
 [Shift left with Azure DevOps](https://dev.azure.com/clt-100ba0e8-bfd0-402c-bcb5-c6dc4d62ba6c/LearnShiftLeft-pub)
-
-
