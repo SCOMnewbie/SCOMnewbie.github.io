@@ -192,7 +192,7 @@ Get-AzResourceGroup
 
 ```
 
-It means that we can from anywhere (not only Azure), do automation with Powershell (Pretty sure we can with CLI too) or deploy resources in Azure without secrets again ...
+It means that we can from anywhere (not only Azure), do automation with Powershell (~~Pretty sure we can with CLI too~~) or deploy resources in Azure without secrets again ...
 
 {% include important.html content="One thing to keep in mind is that you **don't receive any refresh token**. You only have today an access token which means **the task you plan to do has to be done in the hour** otherwise you will get authorization deny." %}
 
