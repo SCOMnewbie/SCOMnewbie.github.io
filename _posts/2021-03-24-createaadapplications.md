@@ -9,6 +9,8 @@ tags: [identity,Powershell,AAD]
 
 I’m still enjoying learning AAD identity topics. In the previous articles, I’ve explained the differences between app registration and Enterprise app. Since I’ve started this learning path, I had to create dozens of applications in my lab. At a certain point, I’ve decided **to automate the AAD app creation**. Today, and according to my knowledge, you can create AAD app with the **AzureAD/Az Powershell modules** or with the **CLI**. Those options seem to have **some limitations** in terms of configuration. Then you have ARM template which is a limitation by itself when you’re talking about AAD application creation (and no I don’t consider [deployment scripts](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template) as a solution). Finally, I know you can use [**Terraform**]( https://registry.terraform.io/providers/hashicorp/azuread/latest/docs) or [**Pulumi**]( https://www.pulumi.com/docs/reference/pkg/azuread/) which seems **pretty complete** to create AAD apps. I wanted to spend few hours to understand **how things work and using SDKs/libraries do not help** in this case. Therefore, I’ve created this repository where We can do a step by step and comment on each line of code. You can find the code [here](https://github.com/SCOMnewbie/PSAADApplication).
 
+{% include important.html content="UPDATE: I've converted this repo in a real usable module instead of the tremendous copy/paste. You can find the module (psd1/psm1) in the PSAADApplication folder." %}
+
 # Why
 
 The main goals of this [repo](https://github.com/SCOMnewbie/PSAADApplication) is to:
@@ -27,7 +29,7 @@ The main goals of this [repo](https://github.com/SCOMnewbie/PSAADApplication) is
 **All apps** (RBAC/Desktop/SPA/…) that we create during this demo **depend of a “generated” json**. I’m using the word “generate” first because working on json directly makes me sick. And then because we have to **calculate properties (guid/displayname)** during the json creation. Here how to use the repo:
 
 * There is templates in the **Templates folder**. This is what I use during the demo (demo.ps1). There is a lot of **useful comments in those files**.
-* During the demo, before executing the Convert-SettingsToJson cmdlet, you have to make sure you’ve <span style="color:red">**copied/pasted the good template in the Convert-SettingsToJson.ps1 file**</span>. You have to do this on each app (sorry about that). Help from smarter people than me is appreciated to improve this part.
+* ~~ During the demo, before executing the Convert-SettingsToJson cmdlet, you have to make sure you’ve <span style="color:red">**copied/pasted the good template in the Convert-SettingsToJson.ps1 file**</span>. You have to do this on each app (sorry about that). Help from smarter people than me is appreciated to improve this part. ~~
 
 {% include note.html content="I didn’t find a smart way to avoid copy/pasting here, if you have ideas, I’m all ears!" %}
 
