@@ -1,74 +1,81 @@
 ﻿---
 title: How to use modern authentication
-date: 2021-03-24 00:00
+date: 2021-05-27 00:00
 categories: [identity]
 tags: [identity,Powershell,AAD]
 ---
 
 # Introduction
 
-I'm learning modern authentications since several months and I still learn things every day! I'm super happy to publicly share what I'm working on my free time. Few weeks ago, I've released a Powershell module to create AAD apps because of the limitations of CLI/Az module for my demos. You can find more information [here](https://scomnewbie.github.io/posts/createaadapplications/). There will be some funny demos with this module later... 
+I'm learning modern authentications since several months and I still learn new things every day! I'm super happy to publicly share what I’m doing on my free time and I hope it will help some of you to **understand how modern authentication is working**. In the past months, I’ve created several articles to explain what modern authentication was. This time we will **make it real** and we will use a module that I’ve released few weeks ago to create AAD apps (useful for multi tiers apps). You can find more information [here](https://scomnewbie.github.io/posts/createaadapplications/).You can find a **copy of this module in the examples folder or directly on my Github.**
 
-I love Powerhell and the Powershell community. And this is where in fact I've started to play with modern authentications. I wanted to play with Graph from my scripts. Now to be honest Powershell is not where you will be able to get the full benefit of the modern identity platform (AAD). Some more advanced langage better interract with the platform (dynamic consent, identity.web library, conditionnal access context auth request, ...). Does it means that I can't learn modern identity? No of course :).
+When I’ve started to work on modern auth with Powershell, I only wanted to execute graph queries from my scripts. I have to admit the available online resources weren’t great at that time (client_credential is not the only flow you can use). This is when I decided to create something to explain my understandings to people.
 
+Now, to be honest **Powershell is not where you will be able to get the full benefit of the identity platform (AAD)** but PosH is good for demos and debugging. Some more advanced language better interacts with the platform (dynamic consent, identity.web library, conditional access context auth request, ...). Does it mean we can't learn how modern authentication is working with Powershell? Nnnnaaahhhh.
 
-What this initiative will propose?
+{% include note.html content="**I will update this article over time.** It takes a lot of time to build those demos (even more for advanced ones) and to put everything 'on paper'." %}
+ 
+Finally, those modules as provided as-is without warranty 😊.
 
-* Use Powershell (for now) to explain how you can interract with AAD. Each demo try to focus on a specic aspect. I've tried to put a lot of comments.
-* Give you tips trhough demo code comments or functions to use the platform.
-* Cheap version of the az module caching but for all applications and scopes.
+Let’s have fun!
 
-What this initiative won't do?
+This initiative will propose:
 
-* Won't explain what identity is from scratch. You can read my previous articles if you want more information. Here, I assume you have at least the glossary of the subject.
+* To use Powershell mainly to explain how to interact with AAD.
+* Several demos where each demo try to focus on a specific topic
+* A lot of tips through comments into the code
+* A module created to learn oauth/OIDC. 
 
+This initiative won't propose:
 
+* To explain what identoty is from scratch. Read my previous articles of follow the 425 show for more information.
 
-Why did I started this initiative?
+Why did I start this initiative?
 
-- People seems to strugle to understand modern authentication.
-- IT persons around me imagine we can interract with Graph only through a AppId/Secret. 
-- Because MSAL.PS wasn't easy enough for me to explain in live how and what modern auth is working.
+* Because modern auth is not a simple topic but it's not so complicated when you understand how it's working. Thanks to Microsoft.
+* Because a lot of co-workers struggle with the subject (dev or IT).
+* Because I wanted to give a little contribution and spending some time to write things.
+* Because Powershell does not have a lot of published articles around modern authentication.
 
+{% include important.html content="This module has been created to help people to understand modern auth. My advice is to use the MSAL.PS module if you want to use Powershell for production workload. But Psoauth2 module can be usefull not to generate tokens, but to validate tokens." %}
 
-Interract with the identoty platform is not something new with Powerhsll or any other langages. The only ways I'm aware of today is by using the MSAL.PS module or by doing this by yourself. For production type of wotklod, I recommend theMSAL.PS library. The side part is that the documentation is not there and as usual using a lib doesn't help you to understand how the whole thing works.
+# Work done
 
-IMPORTANT: Is this module useful? Yes and no in fact. Even if I will continue to work on this module to add few more flows (OBO + Auth  PKCE code with certs), the MSAL.PS which is not an official MSFT module is relying on the MSAL library. Now where this module can be interresting is to validate tokens (more info later).
+This module provides 4 commands:
+* New-Accesstoken
+  * Manage a local cache for access token, refresk tokens, Id Tokens, secrets
+  * Propose several flows:
+    * Device code flow
+    * Client_credential flow with both secrets and certs
+    * Auth code flow with PKCE with or without secret
+  * Manage refresh token when access token is expired (No interaction)
+* Clear-tokenCache to simply remove the local cache
+* Revoke-RefreshTokens to ask AAD to invalidate all current refresh tokens that has been generated before for a user.
+* Test-AADToken which validate if a token is valid or not. We will use this function later once we will play with advanced concepts.
 
-# Module features
+# Work to do
 
-## Current status
-
-* Auth flow with PKCE with or without secret
-* Credential flow
-* Device code flow
-* Acceess Token validation
-* Lot of demos with simple cases
-
-## Future
-
-* On behalf Of flow
-* Auth code PKCE with certs*
-* Create multi tier demos
+* Implement On behalf Of flow
+* Auth code PKCE with certs
+* Create multi tier demos with advanced concepts
 
 # How to use this module
 
 There is two important parts:
 
-* In the psoauth2\psoauth2 folder, you will be able to find the usable Powershell module. You will need to to understand, play, debug the modern authentication flows
-* In the examples folders, you will be able to find multiples demo files where I explain differents aspects of what modern auth is and how you can use it. Over the time, I will fill this folder with more complicated cases (multi-tiers app) and with other langages too.
+* In the psoauth2\psoauth2 folder, you will be able to find the latest usable Powershell module.
+* In the examples folders, you will be able to find multiples demos where I explain different aspects of what modern auth is and how you can use it. Over the time, I will fill this folder with more cases (multi-tiers app) and with other languages too
 
-Below is where I will explain each what each case bring to avoid having to read them all.
-
-## Simple usecases
-
+I recommend to simply follow demos in order.
 ### Prerequisites
 
 * You will need Global admin permission to run those demos (admin consent).
 * You will need to use the PSAADApplication module. You can find it in the Example folder or directly [here](https://github.com/SCOMnewbie/PSAADApplication/tree/main/PSAADApplication/PSAADApplication) for the latest version.
 * You will need the AZ module and/or the AZ CLI too (for certs demos).
 * In some demos, you will need an active subscription with a Keyvault already created.
+## Simple usecases
 
+The simple usecases will contain examples with only one API. For now it's only Powershell, but later I plan to use for fun few other langages.
 ### Script
 
 #### Confidential app with secret for subscription role assignment
@@ -173,27 +180,10 @@ Context:
 
 No picture this time because we only play with AAD this time. No API integration (not the point here).
 
-### API
-
--TBD-
-
-### Desktop App
-
--TBD-
-
-### Other cases
-
-    -TBD-
-
 ## advanced usecases
 
-### Script
-
-### ... later
-
+Work in progress
 
 # Conclusion
 
-
-
-# References
+I hope this article has been useful, don't hesitate to contact me on Twitter if you have question or concerns, I'm always open to feedbacks. 
