@@ -75,17 +75,17 @@ There is two important parts:
 {% include note.html content="Don't forget to use your TenantId/SubscriptionId if you want to play with the demos (always on top of the script)" %}
 
 I recommend to simply follow demos in order.
-### Prerequisites
+# Prerequisites
 
 * You will need Global admin permission to run those demos (admin consent). You can request a dev AAD environment for free [here](https://developer.microsoft.com/en-us/microsoft-365/dev-program).
 * You will need to use the PSAADApplication module. You can find it in the Example folder or directly [here](https://github.com/SCOMnewbie/PSAADApplication/tree/main/PSAADApplication/PSAADApplication) for the latest version.
 * You will need the AZ module and/or the AZ CLI too (for certs demos).
 * In some demos, you will need an **active subscription** with a Keyvault already created.
-## Basic usecases
+# Basic usecases
 
 The simple usecases will contain examples with only one tier. For now it's only Powershell, but later I plan to use other langages.
 
-### Confidential app with secret for subscription role assignment
+## Confidential app with secret for subscription role assignment
 
 * Script is located [here](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/01-Script-ConfApp-Secret-AzureAssignment.ps1).
   
@@ -100,7 +100,7 @@ The simple usecases will contain examples with only one tier. For now it's only 
 
 ![01](/assets/img/2021-06-09/01.png)
 
-### Confidential app with certificate for subscription role assignment
+## Confidential app with certificate for subscription role assignment
 
 * Script is located [here](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/02-Script-ConfApp-Cert-AzureAssignment.ps1).
   
@@ -117,7 +117,7 @@ The simple usecases will contain examples with only one tier. For now it's only 
 
 ![02](/assets/img/2021-06-09/02.png)
 
-### Confidential app with secret to call graph API
+## Confidential app with secret to call graph API
 
 * Script is located [here](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/03-Script-ConfApp-Secret-Application-GraphAPI.ps1).
 * Takeaways:
@@ -132,7 +132,7 @@ The simple usecases will contain examples with only one tier. For now it's only 
 
 ![03](/assets/img/2021-06-09/03.png)
 
-### Confidential app with cert to call graph API
+## Confidential app with cert to call graph API
 
 * Script is located [here](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/04-Script-ConfApp-Cert-GraphAPI.ps1).
 * Takeaways:
@@ -148,7 +148,7 @@ The simple usecases will contain examples with only one tier. For now it's only 
 
 ![04](/assets/img/2021-06-09/04.png)
 
-### Public app with NO SECRET delegated permission to call graph API (Auth code flow with PKCE + Device Code)
+## Public app with NO SECRET delegated permission to call graph API (Auth code flow with PKCE + Device Code)
 
 Context:
 
@@ -172,7 +172,7 @@ In the demo we're are just talking about Global admins accounts (2 differents ac
 
 ![04](/assets/img/2021-06-09/05.png)
 
-### Public app delegated permission with refresh token
+## Public app delegated permission with refresh token
 
 Context:
     Being able to call our API with delegated permission is cool, but do I have to authenticate every hours to my application? This is where refresh token comes into place. The goal of this demo will be to explain how you can get an access token. As before, read the demo file to have deeper information.
@@ -187,7 +187,7 @@ Context:
   * Funny usage of the PSAADApplication module where I will create 5 pre-configured applications with a "simple" swich statement.
   * You can add other claims in the token you will receive in both the Id and Access Token. Check out the joker application (optionalClaims).
 
-## advanced usecases
+# advanced usecases
 
 Work in progress
 
