@@ -189,7 +189,15 @@ Context:
 
 # advanced usecases
 
-Work in progress
+## Multi-tiers applications (frontend with backend api)
+
+* You have all information in this [article](www.google.fr).
+* Takeaways:
+  * Even if our **frontend** does not have secret, we’re still be able to configure the AAD app as a **confidential app** to accept only one authentication flow which is the auth code flow here.
+  * **App role** exist within an app. It's a good solution to **implement authorization** within your app. Just look at the roles claims in the token from your api.
+  * **The API is responsible** of validating both the **token** AND the **authorization**.
+  * **Easy Auth** is cool to **protect your exposed api** without any effort “for free”. You need a **better protection**, use service like **APIM**.
+  * If you plan to expose your single tenant backend API to only a set of users, don’t forget to enabled the the **user assignment required** under the properties menu (Enterprise app)
 
 # Conclusion
 
