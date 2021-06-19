@@ -174,8 +174,7 @@ In the demo we're are just talking about Global admins accounts (2 differents ac
 
 ## Public app delegated permission with refresh token
 
-Context:
-    Being able to call our API with delegated permission is cool, but do I have to authenticate every hours to my application? This is where refresh token comes into place. The goal of this demo will be to explain how you can get an access token. As before, read the demo file to have deeper information.
+Being able to call our API with delegated permission is cool, but do I have to authenticate every hours to my application? This is where refresh token comes into place. The goal of this demo will be to explain how you can get an access token. As before, read the demo file to have deeper information.
 
 * Script is located [here](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/06-Script-Public-Delegated-GraphAPI-RefreshToken.ps1).
 * Takeaways:
@@ -188,10 +187,9 @@ Context:
   * You can add other claims in the token you will receive in both the Id and Access Token. Check out the joker application (optionalClaims).
 
 # advanced usecases
-
 ## Multi-tiers applications (frontend with backend api)
 
-* You have all information in this [article](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/06-Script-Public-Delegated-GraphAPI-RefreshToken.ps1).
+* You have all information in this [article](https://scomnewbie.github.io/posts/protectbackendapi/).
 * Takeaways:
   * Even if our **frontend** does not have secret, we’re still be able to configure the AAD app as a **confidential app** to accept only one authentication flow which is the auth code flow here.
   * **App role** exist within an app. It's a good solution to **implement authorization** within your app. Just look at the roles claims in the token from your api.
