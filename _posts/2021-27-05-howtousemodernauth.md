@@ -191,7 +191,7 @@ Context:
 
 ## Multi-tiers applications (frontend with backend api)
 
-* You have all information in this [article](www.google.fr).
+* You have all information in this [article](https://github.com/SCOMnewbie/psoauth2/blob/main/Examples/06-Script-Public-Delegated-GraphAPI-RefreshToken.ps1).
 * Takeaways:
   * Even if our **frontend** does not have secret, we’re still be able to configure the AAD app as a **confidential app** to accept only one authentication flow which is the auth code flow here.
   * **App role** exist within an app. It's a good solution to **implement authorization** within your app. Just look at the roles claims in the token from your api.
