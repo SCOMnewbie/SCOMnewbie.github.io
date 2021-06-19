@@ -186,7 +186,7 @@ Being able to call our API with delegated permission is cool, but do I have to a
   * Funny usage of the PSAADApplication module where I will create 5 pre-configured applications with a "simple" swich statement.
   * You can add other claims in the token you will receive in both the Id and Access Token. Check out the joker application (optionalClaims).
 
-# advanced usecases
+# Advanced usecases
 ## Multi-tiers applications (frontend with backend api)
 
 * You have all information in this [article](https://scomnewbie.github.io/posts/protectbackendapi/).
