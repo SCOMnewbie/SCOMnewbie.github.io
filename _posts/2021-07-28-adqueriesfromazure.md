@@ -195,7 +195,7 @@ It’s still far cheaper than even the smaller VPN GW you can configure.
 
 It cost me 0,7 € and I’ve used the basic SKU without egress or build time. From the doc you can see:
 
-![price2](/assets/img/2021-07-28/price2.png)
+![price2](/assets/img/2021-07-28/price2.PNG)
 
 ## App Service Plan
 
