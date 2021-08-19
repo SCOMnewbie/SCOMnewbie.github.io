@@ -140,6 +140,8 @@ Because we **don’t want to be over privileged with application permission**, w
    * **Group.Read.All** (Delegated) to allow us to read all directory groups and group members.
    * **Application.Read.All** (Delegated) to allow us to read groups assignment to our app.
    * **GroupMember.ReadWrite.All** (Delegated) to allow us to add/remove members to our DL(s) that we own.
+4. Enable Public application (We will use ROPC in our case because we don't want user interraction)
+5. Create a desktop app redirect URI with the value http://localhost
 
 Now we're good to go and only the groups we own can be modified (not all tenant's groups).
 
