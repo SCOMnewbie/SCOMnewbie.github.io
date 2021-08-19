@@ -19,7 +19,7 @@ If you're interested, you can find a [demo code here](https://github.com/SCOMnew
 
 # Original plan
 
-## List the Enterprise app asignment
+## List the Enterprise app assignment
 
 Here the most important line, /servicePrincipal is to query Enterprise applications where /application is for App registration.
 
