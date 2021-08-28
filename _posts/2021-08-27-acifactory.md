@@ -9,7 +9,7 @@ tags: [Powershell, Container]
 
 Before people start to bash me, I just want to clarify few things. I’m not pros or cons Kubernetes (K8s), **I’m actually a K8s n00b** and learn it is in my to-do list. But I understand how it’s working and what people has to do to make it work properly and securely in a production environment. When you talk about environment **lifecycle**, **cluster upgrades** (control plane, nodes, containers), **networking**, **identity and access management**, **resource wasting**, **internal rebilling**, **cluster spreading** to just name a few topics… We can easily say that **yes, this tool can answer most of the needs** but <span style="color:red">**only if you’re prepared with the extra operational tasks and responsibilities this tool require**</span>. Now I think I just start to be tired of discussions where developers just want to go straight in to K8s without even considering other options…
 
-Within this article, we will work with Azure Container Instance (ACI) and Azure function. I will try to demonstrate a recent idea that I plan to use to execute various workflows without too much configuration overhead. During the last article, I’ve explained I need to run scripts that can exceed the 10 minutes limit that Azure Function with consumption SKU has, therefore ACI becomes a perfect fit. Now if we use Azure function to orchestrate your container groups, **how do you manage the state of your variables between all steps**? 
+This article can be considered as an alternative option. We will work with Azure Container Instance (ACI) and Azure function. I will try to demonstrate a recent idea to execute various workflows without too much configuration overhead. During the last article, I’ve explained I need to run scripts that can exceed the 10 minutes limit that Azure Function with consumption SKU has, therefore ACI becomes a perfect fit. Now if we use Azure function to orchestrate your container groups, **how do you manage the state of your variables between all steps**? 
 
 Serverless is stateless, sadly when you have more than one step in your worflow (like step3 depends on step2 which depends on step1) you have to store your state somewhere like a database. But in my case, where I only need to run scripts, I’m only interested in passing variables from one step to another easily and dynamically **without extra infrastructure**.
 
@@ -91,7 +91,116 @@ Because reader role is not enough again, I’ve granted **contributor role on th
 
 ![07](/assets/img/2021-08-27/07.png)
 
+### Container
+
+Instead of building it locally with Docker and send it to the ACR, we will ask the ACR to build it for us. Let’s connect to our ACR with our AAD creds (Docker desktop and Az CLI are required):
+
+![acrlogin](/assets/img/2021-08-27/acrlogin.png)
+
+Make sure now to change directory in the Docker folder and then type:
+
+![acrupload](/assets/img/2021-08-27/acrupload.png)
+
+We should now have a new image called demo/demoacivariable:v1 in our ACR, let’s verify:
+
+![acruploaddone](/assets/img/2021-08-27/acruploaddone.png)
+
+At this point, most of the infrastructure is done. We will now create our various functions that we will host on our function app and explain each of them. Then we will finish to explain what the container is doing.
+
+## Az functions
+### The initJob
+
+All functions we will add to our function app can be found [here](https://github.com/SCOMnewbie/Azure/tree/master/ACI/Simple_Deployment/AzFunction).
+
+As the name suggest, this is the starting point. This is where we will configure all variables we will consume during the pipeline. In addition to both calculated and hardcoded variables, the HTTP trigger give us the possibility to add information from the requester through body or query parameters. The main idea with this function is that it’s **the only place where you define your variables for the whole pipeline**.
+
+This function has 2 output bindings. HTTP to give a state back the requestor to propose error control and the queue one because we have to drop our variables somewhere…
+
+Here an example:
+
+![bindings](/assets/img/2021-08-27/bindings.png)
+
+{% include important.html content="No secret should be stored in this hashtable. An option can be a Keyvault reference like we will see later." %}
+
+### DQinitjob
+
+This second function will be triggered by the message added in the initjob queue. This Az function will use custom functions located in the loadme module.
+
+Starting from this function, **no variable should be set manually anymore except the ones you don’t want to pass to the next step**. We only consume what is coming from the previous job (initjob in this case). The **New-VariableFactory** function takes a hashtable as a parameter and create variables with the same name/value in the session. In other words, **if you have a key called ___runId  with the value ‘ABC’ in the initjob, this function will create a variable called $___runId with the value ‘ABC’ in your current Powershell session**.  
+
+Because our function app has an identity and a contributor role applied to the ACR, we will be able to fetch an access token for the https://management.azure.com/ resource that we will use to extract the ACR admin credentials **without using any password**!
+
+With ACI, you can expose environment variables to your container group if you follow a specific format. Now, **because we don’t share secrets**, **why not simply expose everything to our container**? This is where the function **New-ACIEnvGenerator** comes into place and where the “naming convention” starts to make sense. This function will take all keys from the initjob and format them to be consumed by the container.
+
+Here for example, we create new “formatted” variable ($envVars) that will contain all current session variables which are starting with our prefix.
+
+``` Powershell
+
+$EnvVars = New-ACIEnvGenerator -Variables $(Get-Variable -Name '___*' ) # our prefix
+
+```
+
+Then, we just deploy container group with a big splatting:
+
+``` Powershell
+
+$splatting = @{
+    Name = $___ContainerName
+    ResourceGroupName = $___ACIRG
+    TemplateSpecId = $___ACITemplateSpecId
+    ContainerName = $___ContainerName
+    ImageName = $___Imagename
+    EnvironmentVariables = $EnvVars
+    imageRegistryCredentialsServer = $___ACRNameFullName
+    imageRegistryCredentialsUsername = $($ACRInfo.Username)
+    imageRegistryCredentialsPassword = $(ConvertTo-SecureString $($ACRInfo.passwords[0].value) -AsPlainText)
+    UserMSIResourceId = $___UserMSIResourceId
+}
+# Deploy the ACI from template specs
+New-AzResourceGroupDeployment @splatting
+
+```
+
+As you can see, in less than 10 lines of code, we **get an access token**, **fetch ACR credential**, **expose dynamic environment variables** to our container and finally **deploy** it!
+
+Once the ACI is created, we can check the exposed environment variables:
+
+![08](/assets/img/2021-08-27/08.png)
+
+And the container logs:
+
+![09](/assets/img/2021-08-27/09.png)
+
+{% include note.html content="A good idea should be to extract logs send them to a storage blob or something else but it’s not the scope of this article." %}
+
+Our container will run once the ACI is deployed but … What our container is doing? For now, this is a **demo script** (DemoACIScript.ps1) so we just display the current environment variables, create a new variable which start with our prefix convention. This is where the function **New-HashtableFactory** is interesting. We basically **create a hashtable with all variables which start with a prefix in our session**. Then we simply send this hashtable to another Azure function with the hashtable as a payload.
+
+The idea with this container is simple. **You always have something to do and you always want to notify something/someone when the job is done**. Now, because we can have more/less data to share to a later step, re-using the dynamic prefixed variables idea help us to **circle back the information**.
+
+### Stage2 (I’m really bad in naming …)
+
+This function just helps us to store the hashtable which comes from the container once the job is done to another queue.
+### RemoveInfra
+
+This final function is triggered by the **message posted by the stage2 function** into a second queue. **The message contains all variables from the initjob AND the new variable we’ve added from the container**. With this function, as before, we **re-hydrate** all variables in memory, and then simply **destroy our container group** in this case.
+
+Why do we want to remove our infrastructure? 
+* You update your container image, you’re sure you use the latest image everytime.
+* You need to pass new environment variables.
+* Cleaner resource group helps for my peace of mind …
+
+## Things to keep in mind
+
+As you’ve seen, in term of **responsibility, we let the cloud provider manage almost everything**. We’re only responsible of the orchestration with the Az func and to keep our container up to date. In fact, we can even ask Azure to keep our container up to date automatically with ACR tasks.
+
+Now it’s not because you have less responsibilities to manage that there is nothing to do, here what I have in mind to improve the idea:
+* Several has to be monitored, here some ideas:
+    * Poison’s queues
+    * ACI deletion fail
+    * Number of runs per day with Azure monitor
+* Download the ACI logs (from your container) and upload it somewhere before we delete the infrastructure.
 # Conclusion
 
+During this article, we’ve seen a way to deploy and orchestrate container(s) easily without a lot of configurations overhead. Effectively, using PaaS products allow us to mainly focus on what we want to run and not what we have to do to make our code to run effectively and securely. In the next article we will add more Azure AD topics to see how we can rely on Keyvault to pass secrets! See you in the next one.
 
 
