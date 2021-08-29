@@ -1,15 +1,15 @@
 ﻿---
-title: Kubernetes is not a silver bullet 
-date: 2021-08-27 00:00
+title: Kubernetes is not the only way...
+date: 2021-08-29 00:00
 categories: [powershell]
 tags: [Powershell, Container]
 ---
 
 # Introduction
 
-Before people start to bash me, I just want to clarify few things. I’m not pros or cons Kubernetes (K8s), **I’m actually a K8s n00b** and learn it is in my to-do list. But I understand how it’s working and what people has to do to make it work properly and securely in a production environment. When you talk about environment **lifecycle**, **cluster upgrades** (control plane, nodes, containers), **networking**, **identity and access management**, **resource wasting**, **internal rebilling**, **cluster spreading** to just name a few topics… We can easily say that **yes, this tool can answer most of the needs** but <span style="color:red">**only if you’re prepared with the extra operational tasks and responsibilities this tool require**</span>. Now I think I just start to be tired of discussions where developers just want to go straight in to K8s without even considering other options…
+Before people start to bash me, I just want to clarify few things. I’m not pros or cons Kubernetes (K8s), **I’m actually a K8s n00b** and learn it is in my to-do list. But I understand how it works and what people has to do to make it work properly and securely in a production environment. When you talk about environment **lifecycle**, **cluster upgrades** (control plane, nodes, containers), **networking**, **identity and access management**, **resource wasting**, **internal rebilling**, **cluster spreading** to just name a few topics… We can easily say that **yes, this tool can answer most of the needs** but <span style="color:red">**only if you’re prepared with the extra operational tasks and responsibilities this tool require**</span>. My point is, don't forget there is other solutions to run your container :).
 
-This article can be considered as an alternative option. We will work with Azure Container Instance (ACI) and Azure function. I will try to demonstrate a recent idea to execute various workflows without too much configuration overhead. During the last article, I’ve explained I need to run scripts that can exceed the 10 minutes limit that Azure Function with consumption SKU has, therefore ACI becomes a perfect fit. Now if we use Azure function to orchestrate your container groups, **how do you manage the state of your variables between all steps**? 
+This article can be considered as an alternative option. We will work with Azure Container Instance (ACI) and Azure function. I will demonstrate a recent idea to execute various workflows without too much configuration overhead. During the last article, I’ve explained I need to run scripts that can exceed the 10 minutes limit that Azure Function with consumption SKU has, therefore ACI becomes a perfect fit. Now if we use Azure function to orchestrate your container groups, **how do you manage the state of your variables between all steps**? 
 
 Serverless is stateless, sadly when you have more than one step in your worflow (like step3 depends on step2 which depends on step1) you have to store your state somewhere like a database. But in my case, where I only need to run scripts, I’m only interested in passing variables from one step to another easily and dynamically **without extra infrastructure**.
 
@@ -23,9 +23,9 @@ The goal of this article will be to demo a way to execute scripts in a modular m
 
 The solution look like this:
 
-![Desktop View](/assets/img/2021-08-27/aciv1.png)
+![Desktop View](/assets/img/2021-08-29/aciv1.png)
 
-1. Is the initial phase where we basically define our dataset of variables we will pass to our pipeline and store in a queue. In addition, we can imagine another Az function with timer trigger which will call the HTTP or directly replace the HTTP one by the timer one if you don’t need external interaction or body parameter.
+1. Is the initial phase where we basically define our dataset of variables we will pass to our pipeline and store in a queue. In addition, we can imagine another Az function with timer trigger which will call the HTTP or you can also replace the HTTP one by the timer one if you don’t need external interaction or body parameter.
 2. Is when the Az function is triggered by the previous step. Implementing async method like this make our solution more flexible and scalable.
 3. Is when a function will ask the ARM fabric to deploy our ACI with a container hosted in a Container Registry (ACR). Once deployed, our container will do his job...
 4. Is once the work is done, the container will contact another Az function to store variables in a second queue to keep our variables for next a later step.
@@ -47,21 +47,21 @@ The function app is the angular stone of this idea, we will use it as the orches
 
 To avoid duplicating code between functions, I’ve created a simple **module called loadme** where we will find all functions we will re-use over and over. Thanks to the portal, it’s easy to add this module to our function app. On the **App Service Editor** menu and the click **Go**.
 
-![01](/assets/img/2021-08-27/01.png)
+![01](/assets/img/2021-08-29/01.png)
 
 Now you can easily **create the required Modules folder** and then **drag and drop the loadme module files** like this:
 
-![02](/assets/img/2021-08-27/02.png)
+![02](/assets/img/2021-08-29/02.png)
 
 At this point, all functions located under this function app will be available to be called.
 
 Now under App files (left menu), make sure your **profile.ps1** looks like this:
 
-![03](/assets/img/2021-08-27/03.png)
+![03](/assets/img/2021-08-29/03.png)
 
 And the **requirements.psd1** like that:
 
-![04](/assets/img/2021-08-27/04.png)
+![04](/assets/img/2021-08-29/04.png)
 
 At this point, our functions will be able to read/write into our resource groups. In addition, we’re now prepared to connect to Azure with the Az.Accounts module, deployed to it with the Az.Resources module and finally use our own custom code with the loadme one! **We will come back later to this function app to create the functions themselves**…
 
@@ -69,11 +69,11 @@ At this point, our functions will be able to read/write into our resource groups
 
 Because we will **create and delete our container group(s) all the time**, if we decide to use a **system managed identity** for our ACI, we will quickly mess up our RBAC table with things like this:
 
-![05](/assets/img/2021-08-27/05.png)
+![05](/assets/img/2021-08-29/05.png)
 
 To avoid this, we will create a **user MSI that our ACI will use during the deployment**. Let’s now create it. **Once done, let’s assigned our previously created function app the role Managed identity operator on the user MSI resource itself**. Effectively, the inherited reader access does not grant enough permission when the function app will deploy our ACI with this user MSI identity.
 
-![06](/assets/img/2021-08-27/06.png)
+![06](/assets/img/2021-08-29/06.png)
 
 {% include note.html content="For the person(s) still with me, this User MSI part is not really mandatory. It is because our Template Specs will require it, but long story short we will use it in the next article…" %}
 
@@ -81,7 +81,7 @@ To avoid this, we will create a **user MSI that our ACI will use during the depl
 
 I won’t be kind in this section. My first plan was to use the CLI but it’s not efficient to bring it into our Az function runtime. Then, **I’ve tried the Az.ContainerInstance Powershell module which is, sorry to say this, the worse Powershell module that I’ve seen**. Nothing is working, the doc is inaccurate, some cmdlets does not even work, I’m surprised that this module went through testing phases …
 
-The last choice that I had was in fact to deploy an ARM template directly. But if I don’t want to store a state in a database, do you think I want to store an ARM template in a storage account? This is where **Template specs start to shine**. The setup is simple, you create a resource called template specs, and paste the content of the ACI.json file. This is a custom template that I’ve quickly created for this proof of concept where we have to specify a User MSI for later usage. 
+The last choice that I had was in fact to deploy an ARM template directly. But if I don’t want to store a state in a database, do you think I want to store an ARM template in a storage account? This is where **Template specs start to shine**. The setup is simple, you create a resource called template specs, and paste the content of the **ACI.json** file. This is a custom template that I’ve quickly created for this proof of concept where we have to specify a User MSI for later usage. 
 
 ## Container Registry (ACR)
 
@@ -89,21 +89,21 @@ Nothing complicated here, create an ACR and sadly make sure the **admin credenti
 
 Because reader role is not enough again, I’ve granted **contributor role on the ACR resource itself to our function app**. For fine grained RBAC, we have to use custom role again...
 
-![07](/assets/img/2021-08-27/07.png)
+![07](/assets/img/2021-08-29/07.png)
 
 ### Container
 
 Instead of building it locally with Docker and send it to the ACR, we will ask the ACR to build it for us. Let’s connect to our ACR with our AAD creds (Docker desktop and Az CLI are required):
 
-![acrlogin](/assets/img/2021-08-27/acrlogin.png)
+![acrlogin](/assets/img/2021-08-29/acrlogin.png)
 
-Make sure now to change directory in the Docker folder and then type:
+Change directory in the Docker folder and then type:
 
-![acrupload](/assets/img/2021-08-27/acrupload.png)
+![acrupload](/assets/img/2021-08-29/acrupload.png)
 
 We should now have a new image called demo/demoacivariable:v1 in our ACR, let’s verify:
 
-![acruploaddone](/assets/img/2021-08-27/acruploaddone.png)
+![acruploaddone](/assets/img/2021-08-29/acruploaddone.png)
 
 At this point, most of the infrastructure is done. We will now create our various functions that we will host on our function app and explain each of them. Then we will finish to explain what the container is doing.
 
@@ -118,7 +118,7 @@ This function has 2 output bindings. HTTP to give a state back the requestor to 
 
 Here an example:
 
-![bindings](/assets/img/2021-08-27/bindings.png)
+![bindings](/assets/img/2021-08-29/bindings.png)
 
 {% include important.html content="No secret should be stored in this hashtable. An option can be a Keyvault reference like we will see later." %}
 
@@ -165,11 +165,11 @@ As you can see, in less than 10 lines of code, we **get an access token**, **fet
 
 Once the ACI is created, we can check the exposed environment variables:
 
-![08](/assets/img/2021-08-27/08.png)
+![08](/assets/img/2021-08-29/08.png)
 
 And the container logs:
 
-![09](/assets/img/2021-08-27/09.png)
+![09](/assets/img/2021-08-29/09.png)
 
 {% include note.html content="A good idea should be to extract logs send them to a storage blob or something else but it’s not the scope of this article." %}
 
