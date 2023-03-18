@@ -1,6 +1,6 @@
 ﻿---
 title: Azure ARC with GCP workflows and Powershell
-date: 2023-03-18 00:00
+date: 2023-03-17 00:00
 categories: [identity]
 tags: [identity, AAD, ARC]
 ---
@@ -17,34 +17,34 @@ During this article, we will cover two scenarios where we will request organizat
 
 First, we have to create an app registration that will represent our workload identity pool.
 
-![01](/assets/img/2023-03-18/01.png)
+![01](/assets/img/2023-03-17/01.png)
 
 Now let's "expose an api":
 
-![02](/assets/img/2023-03-18/02.png)
+![02](/assets/img/2023-03-17/02.png)
 
 Then create a Role into the app role menu:
 
-![03](/assets/img/2023-03-18/04.png)
+![03](/assets/img/2023-03-17/04.png)
 
 Now switch to the Enterprise app and make sure you’ve checked the assignment required: 
 
-![04](/assets/img/2023-03-18/03.png)
+![04](/assets/img/2023-03-17/03.png)
 
 Now we know that only assigned people or application will be able to fetch an AAD token.
 Finally force the V2 in manifest (required for later):
 
-![05](/assets/img/2023-03-18/13.png)
+![05](/assets/img/2023-03-17/13.png)
 
 Let’s now [assign your ARC agent](https://learn.microsoft.com/en-us/graph/api/serviceprincipal-post-approleassignments?view=graph-rest-1.0&tabs=http) (Same agent as previous articles) with graph api. 
 
 {% include note.html content="Because we can’t assign application/Service principal through the portal, we will have to assign it with Graph API." %}
 
-![06](/assets/img/2023-03-18/05.png)
+![06](/assets/img/2023-03-17/05.png)
 
 Once done, you will see your arc agent under user and group: 
 
-![07](/assets/img/2023-03-18/06.png)
+![07](/assets/img/2023-03-17/06.png)
 
 ## GCP
 
@@ -54,11 +54,11 @@ In your project, create a workload identity pool and create a new provider with 
 * The issuer URL with the format https://login.microsoftonline/your aadtenantid/v2.0 thanks to the tokenacceptance 2 in the manifest 
 * The allowed audience which is your GCP that represent your app registration. 
 
-![08](/assets/img/2023-03-18/07.png)
+![08](/assets/img/2023-03-17/07.png)
 
 Let’s now grant access to a service account: 
 
-![09](/assets/img/2023-03-18/08.png)
+![09](/assets/img/2023-03-17/08.png)
 
 Now you have to grant proper RBAC to your service account on you rorganization/project. 
 
@@ -90,7 +90,7 @@ Get-GCPAccessTokenFromAAD @splat
 
 Here the result:
 
-![10](/assets/img/2023-03-18/09.png)
+![10](/assets/img/2023-03-17/09.png)
 
 So now what can we do with this token? This is where you have to (sadly?) use the GCP REST api reference <del>joke</del> eeuuhh website. I didn’t find a central way to find all APIs in the same place, every time I have to go back in the search engine type words like “project rest api reference” and cross my fingers...  
 
@@ -98,7 +98,7 @@ In this article, we will play with the [projects endpoint](https://cloud.google.
 
 And then joke number 2, the API versioning: 
 
-![11](/assets/img/2023-03-18/10.png)
+![11](/assets/img/2023-03-17/10.png)
 
 Each API has several versions where each version is unique in terms of how you interact with it and the results you will have. Anyway, I don’t want to be an asshole but come on Google, try to be in your customer shoes a little bit … 
 
@@ -113,7 +113,7 @@ irm -uri https://cloudresourcemanager.googleapis.com/v3/projects?parent=organiza
 
 Here the result: 
 
-![12](/assets/img/2023-03-18/11.png)
+![12](/assets/img/2023-03-17/11.png)
 
 In other words, we can now, from our AAD token, sign in as a service account and fetch Google Cloud Platform information.  
 
@@ -125,7 +125,7 @@ Because the REST API is complicated, it’s legitimate to say that the CLI will 
 
 According to the [documentation](https://cloud.google.com/sdk/docs/authorizing#:~:text=The%20gcloud%20auth%20login%20command%20authorizes%20access%20by%20using%20workload%20identity%20federation%2C%20which%20provides%20access%20to%20external%20workloads%2C%20or%20by%20using%20a%20service%20account%20key.), the CLI is compatible with workload identities. From the doc, it’s written that using a “configuration” cred-file should be the way to go: 
 
-![13](/assets/img/2023-03-18/14.png)
+![13](/assets/img/2023-03-17/14.png)
 
 But do you think there is an example of how to do this with a workload identity where the OIDC access token you send is usable only for one hour? No 😀 
 
@@ -151,7 +151,7 @@ gcloud projects list --format=json | ConvertFrom-Json | select -f 1
 
 Here the result: 
 
-![14](/assets/img/2023-03-18/12.png)
+![14](/assets/img/2023-03-17/12.png)
 
 # Conclusion
 
