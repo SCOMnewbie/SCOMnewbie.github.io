@@ -9,7 +9,7 @@ tags: [Powershell, Container]
 
 I’m using containers for my day-to-day job more and more. Yes, containers are great, but containers are not a silver bullet.  You **still have to update them on regular basis**. When you just have your application that is running on top of a runtime, it's easy, you update the FROM and case closed. But what about when you have several dependencies included? This is the goal of this [tiny project](https://github.com/SCOMnewbie/AdminToolsImageGenerator). How do you keep your container image **fully up to date**?
 
-# How it’s working? 
+# How is it working? 
 
 Like all my new Powershell projects, I’m using the [Sampler module](https://github.com/gaelcolas/Sampler) to build, test and publish my ideas. This time, the goal isn’t to publish a new module into the Powershell gallery but more to generate an artefact (Dockerfile), build a new Docker image from it and publish it to a container registry.
 
@@ -52,7 +52,7 @@ If everything goes well, the next step will be to connect to the container regis
 
 ![05](/assets/img/2024-05-05/05.png)
 
-Conclusion 
+# Conclusion 
 
 I’m not saying I will do this for all my projects, but some people maybe be interested in the process of keeping the generated image up to date from a cron job or another tipe of event. In addition, I’m using the same process (that I don’t explain here) to patch a generated image with [Copacetic](https://github.com/project-copacetic/copacetic) and Trivy before exposing it to my end user.
 
