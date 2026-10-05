@@ -20,6 +20,12 @@ So I simply decided to spend a few hours playing with it, and provide my feedbac
 
 In this article, we will start smoothly and imagine you are a developer building a web API. For now we will keep AI and web API topics aside. Because this is a sidecar, we will simply use Docker and run straight REST calls.
 
+# What is a sidecar?
+
+If the term is new to you, a **sidecar** is a small, separate container that runs right next to your main application container and handles a cross-cutting concern on its behalf (logging, networking, security, etc.). Both containers share the same lifecycle and talk to each other locally, usually over `localhost`.
+
+The nice part is that your application doesn't need to know *how* the work is done; it just makes a local call and gets a result back. Here, instead of embedding token validation and acquisition logic (and the matching libraries) inside your app, you delegate it to the sidecar. The same pattern works unchanged whether you run on Docker, Kubernetes, ACA/ACI, ECS, and so on.
+
 # App registration
 
 Let's start quickly with the app registration configuration. I know this is not best practice, but to simplify I will create one application that will act as both client and resource (backend api).
@@ -44,13 +50,13 @@ And now let's grant some user permissions within the service principal
 
 ![05](/assets/img/2026-10-02/05.png)
 
-{% include note.html content="I can't add group within this tenant, I will do the test on another one" %}
+{% include note.html content="I can't add a group within this tenant, I will do the test on another one" %}
 
-We should be good to go now, let's configure docker
+We should be good to go now, let's configure Docker
 
 # Docker configuration
 
-In this article we **won't implement good practices**. We will use a secret where MSFT recommends using a managed identity, and we will configure the container to show all logs (development mode + MSAL logs enabled). Make sure you follow the [best practices](https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security) in production.   
+{% include warning.html content="We won't use best practices, make sure you follow the [best practices](https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security) in production" %} 
 
 First the registry: the **doc is not up to date**, but the registry is located [here](https://mcr.microsoft.com/en-us/artifact/mar/entra-sdk/auth-sidecar/tags) and the latest build that I'm interested in is `1.1.2-azurelinux3.0-distroless`.
 
@@ -222,7 +228,7 @@ If you want to validate if it's a v1 or a v2, you can type:
 Start-Process "https://jwt.ms/#access_token=$token"
 ```
 
-Check the aud claim. api://... equals v1 else v2. **Don't forget this is what the sidecar will validate!**.
+Check the aud claim: if it starts with `api://` it's a v1, otherwise it's a v2. **Don't forget this is what the sidecar will validate!**
 
 Now that we have our token, let's call the "sidecar" (don't forget that in the real world, it's your API that should receive this token and forward it to the sidecar; here, for demo purposes, we take a shortcut).
 
