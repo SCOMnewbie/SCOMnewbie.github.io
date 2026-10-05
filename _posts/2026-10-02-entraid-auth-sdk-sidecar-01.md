@@ -30,7 +30,7 @@ The nice part is that your application doesn't need to know *how* the work is do
 
 Let's start quickly with the app registration configuration. I know this is not best practice, but to simplify I will create one application that will act as both client and resource (backend api).
 
-Let's create the app and configure it as desktop app with http://localhost
+Let's create the app and configure it as desktop app with http://localhost. As usual with me, my client will be my Pwsh shell.
 
 ![01](/assets/img/2026-10-02/01.png)
 
