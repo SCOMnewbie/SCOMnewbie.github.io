@@ -1,5 +1,5 @@
 ﻿---
-title: Fun with Entra Id Auth SDK (sidecar) part 1
+title: Fun with Entra Id Auth SDK (sidecar) part 1 - Token validation
 date: 2026-10-02 00:00
 categories: [identity]
 tags: [Entra, Container]
@@ -18,7 +18,7 @@ For people like me who discuss with developers on a regular basis, this can be a
 
 So I simply decided to spend a few hours playing with it, and provide my feedback.
 
-In this article, we will start smoothly and imagine you are a developer building a web API. For now we will keep AI and web API topics aside. Because this is a sidecar, we will simply use Docker and run straight REST calls.
+In this article, we will start smoothly and imagine you are a developer building a web API. For now we will keep AI and web API topics aside. Because this is a sidecar, we will simply use Docker and run straight REST calls and only validate tokens.
 
 # What is a sidecar?
 
@@ -241,3 +241,13 @@ Here is the response:
 ![10](/assets/img/2026-10-02/10.png)
 
 {% include note.html content="This is where if you decide to run the container with the v2 instead of the v1 (in this case) you will hit a 401 on client side and if you check the logs server side, you will see IDX10214: Audience validation failed..." %}
+
+# Extra
+
+Because I wasn't able to validate with my first tenant, I just wanted to confirm on a tenant with P1 licenses that even the groups claim can be used in the validation process. Here is the proof:
+
+![11](/assets/img/2026-10-02/11.png)
+
+# Conclusion
+
+In this article, we've explained the Entra Id Auth SDK (sidecar) "feature" and we've started with the first step, which is the validation process (and which must be your first step as a developer). What I like with this pattern is that you don't really care if you decide to implement your backend API in Go, Rust or any language where you don't necessarily have a token validation library (though today there might already be one!). In the next article, we will play with both the ``AuthorizationHeader`` and ``DownstreamApi`` routes.
