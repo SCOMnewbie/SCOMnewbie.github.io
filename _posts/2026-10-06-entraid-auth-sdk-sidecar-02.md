@@ -7,7 +7,7 @@ tags: [Entra, Container]
 
 # Introduction
 
-In the previous [article](./2026-10-02-entraid-auth-sdk-sidecar-01.md), we covered how to create our environment and how to validate tokens. This time, we will explain how your backend API (still no AI topic in this article) can rely on the Entra Id Auth SDK (sidecar) to call a downstream API like Graph or any other API.
+In the previous [article](https://scomnewbie.github.io/posts/entraid-auth-sdk-sidecar-01/), we covered how to create our environment and how to validate tokens. This time, we will explain how your backend API (still no AI topic in this article) can rely on the Entra Id Auth SDK (sidecar) to call a downstream API like Graph or any other API.
 
 {% include note.html content="Remember, do this only when you've validated the received token" %}
 
