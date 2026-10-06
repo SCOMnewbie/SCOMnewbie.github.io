@@ -59,7 +59,7 @@ The AuthorizationHeader endpoint can be used if your web API need to discuss wit
 
 ## On Behalf flow (OBO)
 
-Remember in the previous article, we've generated a token as a user (Authorization code flow) to access our web API (the declared audience). Now if the web API need to reach another API as the authenticated user, this is where you will have to use the OBO flow. Let's request a graph token as a user:
+Remember in the previous article, we've generated a token as a user (Authorization code flow) to access our web API (the declared audience). Now if the web API need to reach another API as the authenticated user (delegated permission), this is where you will have to use the OBO flow. Let's request a graph token as a user:
 
 ```Powershell
 $ClientId = "<your client Id>"
@@ -72,7 +72,7 @@ $token = Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $ClientId -Tenant
 Now that we have our token to allow our web API to accept the request, let's request another token from your web API (through sidecar) to access Graph API:
 
 ```Powershell
-irm "http://localhost:8080/AuthorizationHeader/Azure?optionsOverride.Scopes=user.read" -Headers @{ Authorization = "Bearer $token"} | % authorizationHeader
+irm "http://localhost:8080/AuthorizationHeader/Graph?optionsOverride.Scopes=user.read" -Headers @{ Authorization = "Bearer $token"} | % authorizationHeader
 ```
 
 If we now decode the generated token to jwt.ms, we will see:
@@ -107,16 +107,36 @@ We can a token to reach ARM as authenticated user.
 
 ## Client credential flow
 
+Let's now use the client credential flow aka user impersonation. You enter as Francois and your web API will call the backend API (Graph/Azure) as Application, not the user anymore (Application permission).
 
+To do this, you will have to add some ``RequestAppToken=true`` overide parameter to force the application flow. In addition, don't forget that now the scope must be ``/.default`` at the end.
 
-
-
-
-
+Here an exemple to call Graph API:
 
 ```Powershell
-irm "http://localhost:8080/AuthorizationHeader/Azure?optionsOverride.RequestAppToken=true&optionsOverride.Scopes=https://graph.microsoft.com/.default" -Headers @{ Authorization = "Bearer $token"} | % authorizationHeader
+irm "http://localhost:8080/AuthorizationHeader/Graph?optionsOverride.RequestAppToken=true&optionsOverride.Scopes=https://graph.microsoft.com/.default" -Headers @{ Authorization = "Bearer $token"} | % authorizationHeader
 ```
+
+If we know decode the token in jwt.ms:
+
+![07](/assets/img/2026-10-06/07.png)
+
+So the $Token is a user token and the generated token is now the web api itself (9ae134fa... is the object id of my service principal).
+
+Just for fun, for Azure the request will look like this:
+
+```Powershell
+irm "http://localhost:8080/AuthorizationHeader/Azure?optionsOverride.RequestAppToken=true&optionsOverride.Scopes=https://management.azure.com/.default" -Headers @{ Authorization = "Bearer $token"} | % authorizationHeader
+```
+
+If you now check the server side, you will see that:
+
+- You have retry for free
+- In case of Entra issue, the sidecar try to reach backup endpoints
+
+![08](/assets/img/2026-10-06/08.png)
+
+We can see that by default MSAL is using memory cache, I don't know if we can used the deserialized caching (I didn't found the answer) but I think he can
 
 
 
